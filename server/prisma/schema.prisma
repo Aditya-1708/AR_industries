@@ -12,11 +12,38 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id          Int           @id @default(autoincrement())
-  firstName   String
-  isAdmin     Boolean       @default(false)
-  email       String
-  lastName    String
-  password    String
+  id        Int     @id @default(autoincrement())
+  firstName String
+  isAdmin   Boolean @default(false)
+  email     String  @unique
+  lastName  String
+  password  String
+}
+
+model Product {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float?
+  stock       Int                @default(0)
+  img         String?
+}
+
+model Process {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+}
+
+model JobOpening {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  location    String?
+  openings    Int      @default(1)
+  salary      Float?
+  isActive    Boolean  @default(true)
+  postedAt    DateTime @default(now())
 }

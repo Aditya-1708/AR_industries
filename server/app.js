@@ -16,9 +16,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/user', userRouter);
-app.use('api/opening',openingRouter);
-app.use('api/process',processRouter);
-app.use('api/product',productRouter)
+app.use('/api/opening', openingRouter);
+app.use('/api/process', processRouter);
+app.use('/api/product', productRouter);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`Server is running on port ${process.env.PORT || 3000}`);

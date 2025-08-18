@@ -1,19 +1,12 @@
 import { Router } from "express";
 import prisma from "../helper/pooler.js";
-import { authenticate } from "../middlewares/authenticate.js";
-import Joi from "joi";
-// import { verifyUser, insertUser, generateToken } from "../helper/auth.js"; 
-// 👆 make sure you actually have these implemented
+import { userSchema } from "../helper/userSchema.js";
+import insertUser from "../helper/insertUser.js";
+import { verifyUser } from "../helper/verifyUser.js";
+import { generateToken } from "../helper/jwt.js";
+import { authenticate } from "../middlewares/authenticate.js";import Joi from "joi";
 
 const userRouter = Router();
-
-// Joi schema
-const userSchema = Joi.object({
-  firstName: Joi.string().required(),
-  lastName: Joi.string().required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -24,7 +17,7 @@ const loginSchema = Joi.object({
 userRouter.post("/signup", async (req, res) => {
   const { firstName, lastName, email, password, role } = req.body;
 
-  const { error } = userSchema.validate({
+  const { error } = userSchema.safeParse({
     firstName,
     lastName,
     email,
@@ -55,7 +48,8 @@ userRouter.post("/signup", async (req, res) => {
 
     const createUser = await insertUser(firstName, lastName, email, password, role);
     return res.status(200).json({ success: true, user: createUser });
-  } catch {
+  } catch (e) {
+    console.error("❌ Signup Error:", e); // 👈 log the error
     return res.status(500).json({ success: false, msg: "Error during signup" });
   }
 });
@@ -93,14 +87,14 @@ userRouter.post("/signin", async (req, res) => {
       user: {
         id: user.id,
         firstName: user.firstName,
-        lastName: user.lastName, // ✅ fixed capital L
+        lastName: user.lastName, // ✅ fixed
         email: user.email,
         isAdmin: user.isAdmin,
         role: user.role,
       },
     });
   } catch (e) {
-    console.error(e);
+    console.error("❌ Signin Error:", e); // 👈 log the error
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -119,6 +113,7 @@ userRouter.get("/logout", authenticate, async (req, res) => {
       .status(200)
       .json({ success: true, message: "Logged out successfully!" });
   } catch (e) {
+    console.error("❌ Logout Error:", e); // 👈 log the error
     res.status(500).json({ success: false, message: "Internal Server Error!" });
   }
 });
@@ -135,11 +130,11 @@ userRouter.get("/me", authenticate, async (req, res) => {
         firstName: true,
         lastName: true,
         isAdmin: true,
-        role: true,
       },
     });
     res.json({ success: true, user });
   } catch (e) {
+    console.error("❌ Me Route Error:", e); // 👈 log the error
     res.send({ success: false, msg: "Error in authenticating" });
   }
 });
