@@ -11,8 +11,8 @@ openingRouter.post("/create", authenticate, async (req, res) => {
       data: {
         title,
         description,
-        openings,
-        salary,
+        openings: parseInt(openings),
+        salary: parseFloat(salary),
         isActive,
       },
     });
@@ -54,21 +54,21 @@ openingRouter.get("/read/:id", async (req, res) => {
   }
 });
 
-
 openingRouter.put("/update/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, openings, salary, isActive } = req.body;
 
+    const updates = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (openings !== undefined) updates.openings = parseInt(openings);
+    if (salary !== undefined) updates.salary = parseInt(salary);
+    if (isActive !== undefined) updates.isActive = isActive;
+
     const job = await prisma.jobOpening.update({
       where: { id: parseInt(id) },
-      data: {
-        title,
-        description,
-        openings,
-        salary,
-        isActive,
-      },
+      data: updates,
     });
 
     res.json(job);
@@ -80,7 +80,6 @@ openingRouter.put("/update/:id", authenticate, async (req, res) => {
     res.status(500).json({ error: "Failed to update job opening" });
   }
 });
-
 
 openingRouter.delete("/delete/:id", authenticate, async (req, res) => {
   try {

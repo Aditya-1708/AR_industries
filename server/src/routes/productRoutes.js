@@ -1,16 +1,18 @@
 import express from "express";
+import fs from "fs";
 import multer from "multer";
 import path from "path";
 import { authenticate } from "../middlewares/authenticate.js";
 import prisma from "../helper/pooler.js";
-import fs from "fs";
 
 const productRouter = express.Router();
 
 // Set up multer to store files in the 'uploads' directory
+const uploadDir = path.join(process.cwd(), "data/uploads/images");
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "../data/uploads/"); // Folder where the image will be stored
+    cb(null, uploadDir); // Folder where the image will be stored
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -28,7 +30,7 @@ productRouter.post(
   upload.single("img"),
   async (req, res) => {
     const { name, description, price, stock } = req.body;
-    const img = req.file ? `../data/uploads/${req.file.filename}` : ""; // Store image path
+    const img = req.file ? `${uploadDir}${req.file.filename}` : ""; // Store image path
 
     try {
       const product = await prisma.product.create({

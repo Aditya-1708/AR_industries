@@ -1,10 +1,11 @@
 import { Router } from "express";
+import Joi from "joi";
+import { authenticate } from "../middlewares/authenticate.js";
+import insertUser from "../helper/insertUser.js"
+import {generateToken} from "../helper/jwt.js"
 import prisma from "../helper/pooler.js";
 import { userSchema } from "../helper/userSchema.js";
-import insertUser from "../helper/insertUser.js";
 import { verifyUser } from "../helper/verifyUser.js";
-import { generateToken } from "../helper/jwt.js";
-import { authenticate } from "../middlewares/authenticate.js";import Joi from "joi";
 
 const userRouter = Router();
 

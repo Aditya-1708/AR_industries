@@ -43,22 +43,24 @@ model Process {
 }
 
 model JobOpening {
-  id             Int              @id @default(autoincrement())
-  title          String
-  description    String?
-  openings       Int              @default(1)
-  salary         Float?
-  isActive       Boolean          @default(true)
-  postedAt       DateTime         @default(now())
-  JobApplication JobApplication[]
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  openings    Int      @default(1)
+  salary      Float?
+  isActive    Boolean  @default(true)
+  postedAt    DateTime @default(now())
+  applications JobApplication[]
 }
 
 model JobApplication {
-  id        Int        @id @default(autoincrement())
-  jobId     Int
-  userId    Int
+  id        Int      @id @default(autoincrement())
   resumeLoc String
-  job       JobOpening @relation(fields: [jobId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
-  appliedAt DateTime   @default(now())
+  appliedAt DateTime @default(now())
+
+  jobId  Int
+  userId Int
+
+  job  JobOpening @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
