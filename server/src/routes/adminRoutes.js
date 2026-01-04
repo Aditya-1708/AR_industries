@@ -1,13 +1,13 @@
 import { Router } from "express";
 import Joi from "joi";
 import { authenticate } from "../middlewares/authenticate.js";
-import insertUser from "../helper/insertUser.js"
-import {generateToken} from "../helper/jwt.js"
+import insertAdmin from "../helper/insertAdmin.js";
+import { generateToken } from "../helper/jwt.js";
 import prisma from "../helper/pooler.js";
-import { userSchema } from "../helper/userSchema.js";
-import { verifyUser } from "../helper/verifyUser.js";
+import { adminSchema } from "../helper/adminSchema.js";
+import { verifyAdmin } from "../helper/verifyAdmin.js";
 
-const userRouter = Router();
+const adminRouter = Router();
 
 const loginSchema = Joi.object({
   email: Joi.string().email().required(),
@@ -15,40 +15,39 @@ const loginSchema = Joi.object({
 });
 
 // ✅ Signup route
-userRouter.post("/signup", async (req, res) => {
-  const { firstName, lastName, email, password, role } = req.body;
+adminRouter.post("/signup", async (req, res) => {
+  const { email, password, role } = req.body;
 
-  const { error } = userSchema.safeParse({
-    firstName,
-    lastName,
+  const { error } = adminSchema.safeParse({
     email,
     password,
+    role,
   });
 
   if (error) {
     return res.status(400).json({
       success: false,
-      msg: error.details[0].message,
+      msg: error,
     });
   }
 
   try {
-    const userExists = await verifyUser(email, password);
-    if (userExists) {
+    const adminExists = await verifyAdmin(email, password);
+    if (adminExists) {
       const token = generateToken({
-        userId: userExists.id,
-        email: userExists.email,
+        adminId: adminExists.id,
+        email: adminExists.email,
       });
       res.cookie("token", token, {
         httpOnly: true,
         sameSite: "Lax",
         maxAge: 60 * 60 * 1000,
       });
-      return res.json({ success: false, msg: "User already exists" });
+      return res.json({ success: false, msg: "admin already exists" });
     }
 
-    const createUser = await insertUser(firstName, lastName, email, password, role);
-    return res.status(200).json({ success: true, user: createUser });
+    const createadmin = await insertAdmin(email, password, role);
+    return res.status(200).json({ success: true, admin: createadmin });
   } catch (e) {
     console.error("❌ Signup Error:", e); // 👈 log the error
     return res.status(500).json({ success: false, msg: "Error during signup" });
@@ -56,7 +55,7 @@ userRouter.post("/signup", async (req, res) => {
 });
 
 // ✅ Signin route
-userRouter.post("/signin", async (req, res) => {
+adminRouter.post("/signin", async (req, res) => {
   const { email, password } = req.body;
 
   const { error } = loginSchema.validate({ email, password });
@@ -68,15 +67,15 @@ userRouter.post("/signin", async (req, res) => {
   }
 
   try {
-    const user = await verifyUser(email, password);
-    if (!user) {
+    const admin = await verifyAdmin(email, password);
+    if (!admin) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
       });
     }
 
-    const token = generateToken({ userId: user.id, email: user.email });
+    const token = generateToken({ adminId: admin.id, email: admin.email });
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "Lax",
@@ -85,13 +84,10 @@ userRouter.post("/signin", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName, // ✅ fixed
-        email: user.email,
-        isAdmin: user.isAdmin,
-        role: user.role,
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        role: admin.role,
       },
     });
   } catch (e) {
@@ -104,7 +100,7 @@ userRouter.post("/signin", async (req, res) => {
 });
 
 // ✅ Logout route
-userRouter.get("/logout", authenticate, async (req, res) => {
+adminRouter.get("/logout", authenticate, async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
@@ -120,24 +116,22 @@ userRouter.get("/logout", authenticate, async (req, res) => {
 });
 
 // ✅ Me route
-userRouter.get("/me", authenticate, async (req, res) => {
+adminRouter.get("/me", authenticate, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const user = await prisma.user.findFirst({
-      where: { id: userId },
+    const adminId = req.admin.adminId;
+    const admin = await prisma.admin.findFirst({
+      where: { id: adminId },
       select: {
         id: true,
         email: true,
-        firstName: true,
-        lastName: true,
-        isAdmin: true,
+        role: true,
       },
     });
-    res.json({ success: true, user });
+    res.json({ success: true, admin });
   } catch (e) {
     console.error("❌ Me Route Error:", e); // 👈 log the error
     res.send({ success: false, msg: "Error in authenticating" });
   }
 });
 
-export default userRouter;
+export default adminRouter;

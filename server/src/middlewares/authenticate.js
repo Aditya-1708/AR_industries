@@ -9,7 +9,7 @@ export const authenticate = (req,res,next)=>{
     }
     try{
         const verify = verifyToken(token);
-        req.user = verify;
+        req.admin = verify;
         next();
     }catch(e)
     {

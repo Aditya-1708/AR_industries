@@ -23,47 +23,47 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Create a new product with image upload
-productRouter.post(
-  "/add",
-  authenticate,
-  upload.single("img"),
-  async (req, res) => {
-    const { name, description, price, stock } = req.body;
-    const img = req.file ? `${uploadDir}${req.file.filename}` : ""; // Store image path
 
+
+// Create a new product with image upload
+productRouter.post("/",authenticate, upload.single("img"), async (req, res) => {
+    const { name, description } = req.body;
+    const img = req.file ? `${uploadDir}${req.file.filename}` : "";
     try {
       const product = await prisma.product.create({
-        data: { name, description, price, stock, img },
+        data: { name, description, img },
       });
-      res.status(201).json(product); // Send back the created product
+      res.status(201).json(product);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error creating product" });
     }
-  }
-);
+});
+
+
 
 // Get all products
-productRouter.get("/get/all", async (req, res) => {
+productRouter.get("/", async (req, res) => {
   try {
     const products = await prisma.product.findMany();
-    res.status(200).json(products); // Send all products
+    res.status(200).json(products);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error fetching products" });
   }
 });
 
+
+
 // Get a single product by ID
-productRouter.get("/get/:id", async (req, res) => {
+productRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const product = await prisma.product.findUnique({
       where: { id: Number(id) },
     });
     if (product) {
-      res.status(200).json(product); // Send the product details
+      res.status(200).json(product);
     } else {
       res.status(404).json({ error: "Product not found" });
     }
@@ -73,15 +73,15 @@ productRouter.get("/get/:id", async (req, res) => {
   }
 });
 
+
+
 // Update a product by ID
-productRouter.put("/update/:id", upload.single("img"), async (req, res) => {
+productRouter.put("/:id",authenticate, upload.single("img"), async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, stock } = req.body;
+  const { name, description } = req.body;
   const updateData = {
     name,
     description,
-    price: parseFloat(price),
-    stock: parseInt(stock),
   };
   if (req.file) {
     updateData.img = req.file.filename;
@@ -91,19 +91,19 @@ productRouter.put("/update/:id", upload.single("img"), async (req, res) => {
       where: { id: Number(id) },
       data: updateData,
     });
-    res.status(200).json(product); // Send the updated product
+    res.status(200).json(product);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error updating product" });
   }
 });
 
-// Delete a product by ID
 
-productRouter.delete("/delete/:id", authenticate, async (req, res) => {
+
+// Delete a product by ID
+productRouter.delete("/:id", authenticate, async (req, res) => {
   const { id } = req.params;
   try {
-    // Find product first
     const product = await prisma.product.findUnique({
       where: { id: Number(id) },
     });
@@ -111,12 +111,10 @@ productRouter.delete("/delete/:id", authenticate, async (req, res) => {
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-
-    // Delete image file if exists
     if (product.img) {
       const imagePath = path.join(
         process.cwd(),
-        "../data/uploads",
+        "/data/uploads",
         product.img
       );
       fs.unlink(imagePath, (err) => {
@@ -125,8 +123,6 @@ productRouter.delete("/delete/:id", authenticate, async (req, res) => {
         }
       });
     }
-
-    // Delete product from DB
     await prisma.product.delete({
       where: { id: Number(id) },
     });
