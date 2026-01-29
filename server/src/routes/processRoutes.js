@@ -1,51 +1,44 @@
 import express from "express";
-import fs from "fs";
-import multer from "multer";
-import path from "path";
 import { authenticate } from "../middlewares/authenticate.js";
 import prisma from "../helper/pooler.js";
 
 const processRouter = express.Router();
 
-// Set up multer to store files in the 'uploads' directory
-const uploadDir = path.join(process.cwd(), "data/uploads/images");
+/**
+ * CREATE process
+ */
+processRouter.post("/", authenticate, async (req, res) => {
+  const { name, description, icon, highlights } = req.body;
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); // Folder where the image will be stored
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = Date.now() + ext; // Unique filename based on timestamp
-    cb(null, filename);
-  },
+  if (!name) {
+    return res.status(400).json({ error: "Name is required" });
+  }
+
+  try {
+    const process = await prisma.process.create({
+      data: {
+        name,
+        description,
+        icon,
+        highlights: highlights || [],
+      },
+    });
+
+    res.status(201).json(process);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error creating process" });
+  }
 });
 
-const upload = multer({ storage });
-
-
-
-// Create a new process with image upload
-processRouter.post("/",authenticate, upload.single("img"), async (req, res) => {
-    const { name, description } = req.body;
-    const img = req.file ? `${uploadDir}${req.file.filename}` : "";
-    try {
-      const process = await prisma.process.create({
-        data: { name, description, img },
-      });
-      res.status(201).json(process);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Error creating process" });
-    }
-});
-
-
-
-// Get all processes
+/**
+ * GET all processes
+ */
 processRouter.get("/", async (req, res) => {
   try {
-    const processes = await prisma.process.findMany();
+    const processes = await prisma.process.findMany({
+      orderBy: { createdAt: "asc" },
+    });
     res.status(200).json(processes);
   } catch (error) {
     console.error(error);
@@ -53,43 +46,46 @@ processRouter.get("/", async (req, res) => {
   }
 });
 
-
-
-// Get a single process by ID
+/**
+ * GET single process
+ */
 processRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
     const process = await prisma.process.findUnique({
       where: { id: Number(id) },
     });
-    if (process) {
-      res.status(200).json(process);
-    } else {
-      res.status(404).json({ error: "process not found" });
+
+    if (!process) {
+      return res.status(404).json({ error: "Process not found" });
     }
+
+    res.status(200).json(process);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error fetching process" });
   }
-});;
+});
 
-
-// Update a process by ID
-processRouter.put("/:id",authenticate, upload.single("img"), async (req, res) => {
+/**
+ * UPDATE process
+ */
+processRouter.put("/:id", authenticate, async (req, res) => {
   const { id } = req.params;
-  const { name, description } = req.body;
-  const updateData = {
-    name,
-    description,
-  };
-  if (req.file) {
-    updateData.img = req.file.filename;
-  }
+  const { name, description, icon, highlights } = req.body;
+
   try {
     const process = await prisma.process.update({
       where: { id: Number(id) },
-      data: updateData,
+      data: {
+        name,
+        description,
+        icon,
+        highlights,
+      },
     });
+
     res.status(200).json(process);
   } catch (error) {
     console.error(error);
@@ -97,36 +93,18 @@ processRouter.put("/:id",authenticate, upload.single("img"), async (req, res) =>
   }
 });
 
-
-
-// Delete a process by ID
+/**
+ * DELETE process
+ */
 processRouter.delete("/:id", authenticate, async (req, res) => {
   const { id } = req.params;
-  try {
-    const process = await prisma.process.findUnique({
-      where: { id: Number(id) },
-    });
 
-    if (!process) {
-      return res.status(404).json({ error: "process not found" });
-    }
-    if (process.img) {
-      const imagePath = path.join(
-        process.cwd(),
-        "/data/uploads",
-        process.img
-      );
-      fs.unlink(imagePath, (err) => {
-        if (err) {
-          console.error("Error deleting image file:", err);
-        }
-      });
-    }
+  try {
     await prisma.process.delete({
       where: { id: Number(id) },
     });
 
-    res.status(200).json({ message: "process and image deleted successfully" });
+    res.status(200).json({ message: "Process deleted successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error deleting process" });

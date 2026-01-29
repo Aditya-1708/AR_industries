@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Process" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "highlights" TEXT[],
+ADD COLUMN     "icon" TEXT;

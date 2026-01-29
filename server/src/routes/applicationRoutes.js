@@ -7,7 +7,7 @@ import fs from "fs";
 
 const applicationRouter = Router();
 
-const uploadDir = path.join(process.cwd(), "../data/uploads/resumes");
+const uploadDir = path.join(process.cwd(), "/.data/uploads/resumes");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({

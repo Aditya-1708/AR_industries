@@ -1,6 +1,7 @@
 import express, { application } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import userRouter from "./routes/adminRoutes.js";
 import openingRouter from "./routes/openingRoutes.js";
 import productRouter from "./routes/productRoutes.js";
@@ -20,7 +21,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads",  express.static(path.join(process.cwd(), "data", "uploads")));
 
 app.use("/api/admins",adminRouter)
 app.use("/api/openings", openingRouter);

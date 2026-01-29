@@ -3,7 +3,7 @@ import prisma from "../helper/pooler.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
 const openingRouter = Router();
-openingRouter.post("/create", authenticate, async (req, res) => {
+openingRouter.post("/", authenticate, async (req, res) => {
   try {
     const { title, description, openings, salary, isActive } = req.body;
 
@@ -24,19 +24,19 @@ openingRouter.post("/create", authenticate, async (req, res) => {
   }
 });
 
-openingRouter.get("/read", async (req, res) => {
+openingRouter.get("/", async (req, res) => {
   try {
     const jobs = await prisma.jobOpening.findMany({
       orderBy: { postedAt: "desc" },
     });
-    res.json(jobs);
+    res.json({"jobs":jobs});
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch job openings" });
   }
 });
 
-openingRouter.get("/read/:id", async (req, res) => {
+openingRouter.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const job = await prisma.jobOpening.findUnique({
@@ -54,7 +54,7 @@ openingRouter.get("/read/:id", async (req, res) => {
   }
 });
 
-openingRouter.put("/update/:id", authenticate, async (req, res) => {
+openingRouter.put("/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, openings, salary, isActive } = req.body;
@@ -81,7 +81,7 @@ openingRouter.put("/update/:id", authenticate, async (req, res) => {
   }
 });
 
-openingRouter.delete("/delete/:id", authenticate, async (req, res) => {
+openingRouter.delete("/:id", authenticate, async (req, res) => {
   try {
     const { id } = req.params;
 

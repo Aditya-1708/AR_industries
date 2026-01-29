@@ -16,12 +16,11 @@ const loginSchema = Joi.object({
 
 // ✅ Signup route
 adminRouter.post("/signup", async (req, res) => {
-  const { email, password, role } = req.body;
+  const { email, password } = req.body;
 
   const { error } = adminSchema.safeParse({
     email,
     password,
-    role,
   });
 
   if (error) {
@@ -124,7 +123,6 @@ adminRouter.get("/me", authenticate, async (req, res) => {
       select: {
         id: true,
         email: true,
-        role: true,
       },
     });
     res.json({ success: true, admin });

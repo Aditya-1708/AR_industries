@@ -1,0 +1,25 @@
+{
+  "name": "ar_industries",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "run.bat",
+    "stop": "stop.bat"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Aditya-1708/AR_industries.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Aditya-1708/AR_industries/issues"
+  },
+  "homepage": "https://github.com/Aditya-1708/AR_industries#readme",
+  "dependencies": {
+    "pm2": "^6.0.14"
+  }
+}

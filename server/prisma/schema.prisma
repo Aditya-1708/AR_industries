@@ -13,40 +13,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AdminRole {
-  SUPER_ADMIN
-  EDITOR
-  VIEWER
-}
-
 model Admin {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
   password  String
-  role      AdminRole @default(EDITOR)
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 model Product {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
-  type        String?
   img         String?
+  createdAt   DateTime @default(now())
 }
 
 model Process {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
-  img         String?
+  icon        String?   
+  highlights  String[]    
+  createdAt   DateTime @default(now())
 }
+
+model Equipment {
+  id          Int      @id @default(autoincrement())
+  name        String
+  details     String?
+  description String?
+  image       String?     // stores relative image path, not import
+  createdAt   DateTime @default(now())
+}
+
 
 model JobOpening {
   id           Int              @id @default(autoincrement())
   title        String
-  description  String?
+  description  String
+  requirements String
   isActive     Boolean          @default(true)
   postedAt     DateTime         @default(now())
   applications JobApplication[]
