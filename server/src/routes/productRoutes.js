@@ -2,12 +2,12 @@ import express from "express";
 import { authenticate } from "../middlewares/authenticate.js";
 import prisma from "../helper/pooler.js";
 
-const processRouter = express.Router();
+const productRouter = express.Router();
 
 /**
- * CREATE process
+ * CREATE product
  */
-processRouter.post("/", authenticate, async (req, res) => {
+productRouter.post("/", authenticate, async (req, res) => {
   const { name, description, icon, highlights } = req.body;
 
   if (!name) {
@@ -15,7 +15,7 @@ processRouter.post("/", authenticate, async (req, res) => {
   }
 
   try {
-    const process = await prisma.process.create({
+    const product = await prisma.product.create({
       data: {
         name,
         description,
@@ -24,59 +24,59 @@ processRouter.post("/", authenticate, async (req, res) => {
       },
     });
 
-    res.status(201).json(process);
+    res.status(201).json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error creating process" });
+    res.status(500).json({ error: "Error creating product" });
   }
 });
 
 /**
- * GET all processes
+ * GET all productes
  */
-processRouter.get("/", async (req, res) => {
+productRouter.get("/", async (req, res) => {
   try {
-    const processes = await prisma.process.findMany({
+    const productes = await prisma.product.findMany({
       orderBy: { createdAt: "asc" },
     });
-    res.status(200).json(processes);
+    res.status(200).json(productes);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error fetching processes" });
+    res.status(500).json({ error: "Error fetching productes" });
   }
 });
 
 /**
- * GET single process
+ * GET single product
  */
-processRouter.get("/:id", async (req, res) => {
+productRouter.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const process = await prisma.process.findUnique({
+    const product = await prisma.product.findUnique({
       where: { id: Number(id) },
     });
 
-    if (!process) {
-      return res.status(404).json({ error: "Process not found" });
+    if (!product) {
+      return res.status(404).json({ error: "product not found" });
     }
 
-    res.status(200).json(process);
+    res.status(200).json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error fetching process" });
+    res.status(500).json({ error: "Error fetching product" });
   }
 });
 
 /**
- * UPDATE process
+ * UPDATE product
  */
-processRouter.put("/:id", authenticate, async (req, res) => {
+productRouter.put("/:id", authenticate, async (req, res) => {
   const { id } = req.params;
   const { name, description, icon, highlights } = req.body;
 
   try {
-    const process = await prisma.process.update({
+    const product = await prisma.product.update({
       where: { id: Number(id) },
       data: {
         name,
@@ -86,29 +86,29 @@ processRouter.put("/:id", authenticate, async (req, res) => {
       },
     });
 
-    res.status(200).json(process);
+    res.status(200).json(product);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error updating process" });
+    res.status(500).json({ error: "Error updating product" });
   }
 });
 
 /**
- * DELETE process
+ * DELETE product
  */
-processRouter.delete("/:id", authenticate, async (req, res) => {
+productRouter.delete("/:id", authenticate, async (req, res) => {
   const { id } = req.params;
 
   try {
-    await prisma.process.delete({
+    await prisma.product.delete({
       where: { id: Number(id) },
     });
 
-    res.status(200).json({ message: "Process deleted successfully" });
+    res.status(200).json({ message: "product deleted successfully" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error deleting process" });
+    res.status(500).json({ error: "Error deleting product" });
   }
 });
 
-export default processRouter;
+export default productRouter;
