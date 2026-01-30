@@ -8,7 +8,7 @@ const API_URL = "http://localhost:3000/api/products";
 
 // ⚠️ Paste your real token here (or use env)
 const TOKEN =
-  "";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbklkIjoxLCJlbWFpbCI6InVtZXN0YWRpdHlhNzJAZ21haWwuY29tIiwiaWF0IjoxNzY5Nzg2MzMzLCJleHAiOjE3Njk3ODk5MzN9.YJUIl6-ucSSC2ce8vjyZ80o3ammckNg14RCVjo9mpJM";
 
 // Absolute path to images (Windows-safe)
 const IMG_BASE = path.resolve(

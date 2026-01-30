@@ -7,118 +7,113 @@ import fs from "fs";
 
 const applicationRouter = Router();
 
-const uploadDir = path.join(process.cwd(), "/.data/uploads/resumes");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+/* ================= UPLOAD CONFIG ================= */
+
+const uploadDir = path.join(process.cwd(), "data/uploads/resumes");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
+  destination: (_, __, cb) => cb(null, uploadDir),
+  filename: (_, file, cb) => {
     const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, uniqueName);
+    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    cb(null, name);
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [".pdf", ".docx"];
+const fileFilter = (_, file, cb) => {
+  const allowed = [".pdf", ".docx"];
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedTypes.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only .pdf and .docx files are allowed"), false);
-  }
+  allowed.includes(ext)
+    ? cb(null, true)
+    : cb(new Error("Only PDF and DOCX allowed"), false);
 };
 
 const upload = multer({ storage, fileFilter });
+
+/* ================= CREATE APPLICATION (PUBLIC) ================= */
 
 applicationRouter.post("/", upload.single("resume"), async (req, res) => {
   try {
     const { jobId, fullName, email, phoneNo, wswhy } = req.body;
 
-    if (!jobId || !req.file) {
-      return res
-        .status(400)
-        .json({ message: "Job ID and resume are required" });
-    }
-    const parsedJobId = Number(jobId);
-    if (Number.isNaN(parsedJobId)) {
-      return res.status(400).json({ message: "Invalid jobId" });
+    if (!jobId || !fullName || !email || !phoneNo || !req.file) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
     const application = await prisma.jobApplication.create({
       data: {
-        jobId: parsedJobId,
+        jobId: Number(jobId),
         fullName,
         email,
         phoneNo,
         wswhy: wswhy || "",
-        resumeLoc: req.file.path,
+        resume: `resumes/${req.file.filename}`, // ✅ relative path
       },
     });
 
-    res.status(201).json({
-      message: "Application submitted successfully",
-      application,
-    });
+    res.status(201).json(application);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Error submitting application" });
+    res.status(500).json({ message: "Failed to submit application" });
   }
 });
 
-applicationRouter.get("/", authenticate, async (req, res) => {
+/* ================= ADMIN: GET ALL APPLICATIONS ================= */
+
+applicationRouter.get("/", async (req, res) => {
   try {
-    const userId = req.user.id;
     const applications = await prisma.jobApplication.findMany({
-      where: { userId },
+      include: {
+        job: { select: { title: true } },
+      },
+      orderBy: { appliedAt: "desc" },
     });
-    if (!applications.length) {
-      return res
-        .status(404)
-        .json({ message: "No applications found for this user" });
-    }
-    res.status(200).json({
-      message: "Applications retrieved successfully",
-      applications,
-    });
+
+    res.json(applications);
   } catch (err) {
-    res.status(500).json({ message: "Error retrieving applications" });
+    res.status(500).json({ message: "Failed to fetch applications" });
   }
 });
 
-applicationRouter.get("/:jobId", authenticate, async (req, res) => {
+/* ================= ADMIN: GET APPLICATIONS BY JOB ================= */
+
+applicationRouter.get("/job/:jobId", async (req, res) => {
   try {
-    const jobId = parseInt(req.params.jobId);
     const applications = await prisma.jobApplication.findMany({
-      where: { jobId },
+      where: { jobId: Number(req.params.jobId) },
+      orderBy: { appliedAt: "desc" },
     });
 
-    if (!applications.length) {
-      return res
-        .status(404)
-        .json({ message: "No applications found for this job" });
-    }
-
-    res.status(200).json({
-      message: "Applications retrieved successfully",
-      applications,
-    });
+    res.json(applications);
   } catch (err) {
-    res.status(500).json({ message: "Error retrieving applications" });
+    res.status(500).json({ message: "Failed to fetch applications" });
   }
 });
 
-applicationRouter.delete("/:id", authenticate, async (req, res) => {
-  const id = ParseInt(req.params.applicationId);
+/* ================= ADMIN: DELETE APPLICATION ================= */
+
+applicationRouter.delete("/:id", async (req, res) => {
   try {
-    const deletedApplication = await prisma.application.delete({
-      where: { id },
-    });
-    res.status(200).json({ deletedApplication });
-  } catch (error) {
-    res.status(400).json(error);
+    const id = Number(req.params.id);
+
+    const application = await prisma.jobApplication.findUnique({ where: { id } });
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    // delete resume file
+    const filePath = path.join(process.cwd(), "data/uploads", application.resume);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    await prisma.jobApplication.delete({ where: { id } });
+
+    res.json({ message: "Application deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete application" });
   }
 });
 

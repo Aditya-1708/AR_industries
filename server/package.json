@@ -18,9 +18,7 @@
     "joi": "^18.0.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "prisma": "^6.18.0",
     "zod": "^4.0.17"
-  },
-  "devDependencies": {
-    "prisma": "^6.18.0"
   }
 }

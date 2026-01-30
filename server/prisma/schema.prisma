@@ -33,8 +33,8 @@ model Process {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
-  icon        String?   
-  highlights  String[]    
+  icon        String?
+  highlights  String[]
   createdAt   DateTime @default(now())
 }
 
@@ -43,29 +43,39 @@ model Equipment {
   name        String
   details     String?
   description String?
-  image       String?     // stores relative image path, not import
+  image       String? // stores relative image path, not import
   createdAt   DateTime @default(now())
 }
-
 
 model JobOpening {
   id           Int              @id @default(autoincrement())
   title        String
   description  String
-  requirements String
+  requirements String[]
+  salary       Int?
   isActive     Boolean          @default(true)
   postedAt     DateTime         @default(now())
   applications JobApplication[]
 }
 
 model JobApplication {
-  id        Int        @id @default(autoincrement())
-  fullName  String
-  email     String
-  phoneNo   String
-  wswhy     String?
-  resumeLoc String
-  appliedAt DateTime   @default(now())
-  jobId     Int
-  job       JobOpening @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id       Int               @id @default(autoincrement())
+  fullName String
+  email    String
+  phoneNo  String
+  wswhy    String?
+  resume   String
+  status   ApplicationStatus @default(PENDING)
+  appliedAt DateTime @default(now())
+  jobId Int
+  job   JobOpening @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  @@index([jobId])
+  @@index([email])
+}
+
+enum ApplicationStatus {
+  PENDING
+  SHORTLISTED
+  REJECTED
+  HIRED
 }

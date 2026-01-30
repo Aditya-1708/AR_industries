@@ -6,7 +6,7 @@ import prisma from "./pooler.js";
 dotenv.config();
 
 export default async function insertAdmin(email, password, role) {
-  if (!email || !password || !role) {
+  if (!email || !password ) {
     console.error("Missing required fields");
     throw new Error("All fields are required");
   }
@@ -26,12 +26,10 @@ export default async function insertAdmin(email, password, role) {
       data: {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
-        role: role,
       },
       select: {
         id: true,
         email: true,
-        role: true,
       },
     });
 

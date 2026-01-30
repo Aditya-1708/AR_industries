@@ -3,44 +3,58 @@ import prisma from "../helper/pooler.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
 const openingRouter = Router();
-openingRouter.post("/", authenticate, async (req, res) => {
+
+/* ================= CREATE JOB ================= */
+openingRouter.post("/", async (req, res) => {
   try {
-    const { title, description, openings, salary, isActive } = req.body;
+    const { title, description, requirements, salary, isActive } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({ error: "Title and description are required" });
+    }
 
     const job = await prisma.jobOpening.create({
       data: {
         title,
         description,
-        openings: parseInt(openings),
-        salary: parseFloat(salary),
-        isActive,
+        requirements: Array.isArray(requirements)
+          ? requirements
+          : typeof requirements === "string"
+          ? requirements.split(",").map((r) => r.trim())
+          : [],
+        salary: salary ? parseInt(salary) : null,
+        isActive: isActive ?? true,
       },
     });
 
     res.status(201).json(job);
   } catch (error) {
-    console.error(error);
+    console.error("CREATE JOB ERROR:", error);
     res.status(500).json({ error: "Failed to create job opening" });
   }
 });
 
+/* ================= GET ALL JOBS ================= */
 openingRouter.get("/", async (req, res) => {
   try {
     const jobs = await prisma.jobOpening.findMany({
       orderBy: { postedAt: "desc" },
     });
-    res.json({"jobs":jobs});
+
+    res.json({ jobs });
   } catch (error) {
-    console.error(error);
+    console.error("FETCH JOBS ERROR:", error);
     res.status(500).json({ error: "Failed to fetch job openings" });
   }
 });
 
+/* ================= GET SINGLE JOB ================= */
 openingRouter.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
+
     const job = await prisma.jobOpening.findUnique({
-      where: { id: parseInt(id) },
+      where: { id },
     });
 
     if (!job) {
@@ -49,52 +63,65 @@ openingRouter.get("/:id", async (req, res) => {
 
     res.json(job);
   } catch (error) {
-    console.error(error);
+    console.error("FETCH JOB ERROR:", error);
     res.status(500).json({ error: "Failed to fetch job opening" });
   }
 });
 
-openingRouter.put("/:id", authenticate, async (req, res) => {
+/* ================= UPDATE JOB ================= */
+openingRouter.put("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const { title, description, openings, salary, isActive } = req.body;
+    const id = Number(req.params.id);
+    const { title, description, requirements, salary, isActive } = req.body;
 
     const updates = {};
+
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
-    if (openings !== undefined) updates.openings = parseInt(openings);
-    if (salary !== undefined) updates.salary = parseInt(salary);
+
+    if (requirements !== undefined) {
+      updates.requirements = Array.isArray(requirements)
+        ? requirements
+        : requirements.split(",").map((r) => r.trim());
+    }
+
+    if (salary !== undefined) updates.salary = salary ? parseInt(salary) : null;
     if (isActive !== undefined) updates.isActive = isActive;
 
     const job = await prisma.jobOpening.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: updates,
     });
 
     res.json(job);
   } catch (error) {
-    console.error(error);
+    console.error("UPDATE JOB ERROR:", error);
+
     if (error.code === "P2025") {
       return res.status(404).json({ error: "Job opening not found" });
     }
+
     res.status(500).json({ error: "Failed to update job opening" });
   }
 });
 
-openingRouter.delete("/:id", authenticate, async (req, res) => {
+/* ================= DELETE JOB ================= */
+openingRouter.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     await prisma.jobOpening.delete({
-      where: { id: parseInt(id) },
+      where: { id },
     });
 
     res.json({ message: "Job opening deleted successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("DELETE JOB ERROR:", error);
+
     if (error.code === "P2025") {
       return res.status(404).json({ error: "Job opening not found" });
     }
+
     res.status(500).json({ error: "Failed to delete job opening" });
   }
 });

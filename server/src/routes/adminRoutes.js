@@ -45,7 +45,7 @@ adminRouter.post("/signup", async (req, res) => {
       return res.json({ success: false, msg: "admin already exists" });
     }
 
-    const createadmin = await insertAdmin(email, password, role);
+    const createadmin = await insertAdmin(email, password);
     return res.status(200).json({ success: true, admin: createadmin });
   } catch (e) {
     console.error("❌ Signup Error:", e); // 👈 log the error
