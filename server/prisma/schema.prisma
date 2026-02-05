@@ -59,18 +59,28 @@ model JobOpening {
 }
 
 model JobApplication {
-  id       Int               @id @default(autoincrement())
-  fullName String
-  email    String
-  phoneNo  String
-  wswhy    String?
-  resume   String
-  status   ApplicationStatus @default(PENDING)
-  appliedAt DateTime @default(now())
-  jobId Int
-  job   JobOpening @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  id        Int               @id @default(autoincrement())
+  fullName  String
+  email     String
+  phoneNo   String
+  wswhy     String?
+  resume    String
+  status    ApplicationStatus @default(PENDING)
+  appliedAt DateTime          @default(now())
+  jobId     Int
+  job       JobOpening        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
   @@index([jobId])
   @@index([email])
+}
+
+model Staff {
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ApplicationStatus {

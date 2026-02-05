@@ -1,41 +1,21 @@
 import { Router } from "express";
 import prisma from "../helper/pooler.js";
-import { authenticate } from "../middlewares/authenticate.js";
-import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { createUploader } from "../middlewares/upload.js";
 
 const applicationRouter = Router();
 
 /* ================= UPLOAD CONFIG ================= */
 
-const uploadDir = path.join(process.cwd(), "data/uploads/resumes");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
-  filename: (_, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, name);
-  },
-});
-
-const fileFilter = (_, file, cb) => {
-  const allowed = [".pdf", ".docx"];
-  const ext = path.extname(file.originalname).toLowerCase();
-  allowed.includes(ext)
-    ? cb(null, true)
-    : cb(new Error("Only PDF and DOCX allowed"), false);
-};
-
-const upload = multer({ storage, fileFilter });
+const uploadApplicationResume = createUploader("data/uploads/resumes", [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
 
 /* ================= CREATE APPLICATION (PUBLIC) ================= */
 
-applicationRouter.post("/", upload.single("resume"), async (req, res) => {
+applicationRouter.post("/", uploadApplicationResume.single("resume"), async (req, res) => {
   try {
     const { jobId, fullName, email, phoneNo, wswhy } = req.body;
 
@@ -99,13 +79,19 @@ applicationRouter.delete("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const application = await prisma.jobApplication.findUnique({ where: { id } });
+    const application = await prisma.jobApplication.findUnique({
+      where: { id },
+    });
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
     }
 
     // delete resume file
-    const filePath = path.join(process.cwd(), "data/uploads", application.resume);
+    const filePath = path.join(
+      process.cwd(),
+      "data/uploads",
+      application.resume,
+    );
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
     await prisma.jobApplication.delete({ where: { id } });

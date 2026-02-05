@@ -1,30 +1,17 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import multer from "multer";
 import { authenticate } from "../middlewares/authenticate.js";
 import prisma from "../helper/pooler.js";
+import { createUploader } from "../middlewares/upload.js";
 
 const equipmentRouter = express.Router();
 
-// ================= PATHS =================
-const UPLOAD_DIR = path.join(process.cwd(), "data/uploads/equipments");
-
-// ensure directory exists
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-// ================= MULTER =================
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (_, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}${ext}`);
-  },
-});
-
-const upload = multer({ storage });
+const uploadEquipmentImage = createUploader("data/uploads/equipments", [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 // ================= ROUTES =================
 
@@ -34,7 +21,7 @@ const upload = multer({ storage });
 equipmentRouter.post(
   "/",
   authenticate,
-  upload.single("image"),
+  uploadEquipmentImage.single("image"),
   async (req, res) => {
     const { name, details, description } = req.body;
 
@@ -59,7 +46,7 @@ equipmentRouter.post(
       console.error(error);
       res.status(500).json({ error: "Error creating equipment" });
     }
-  }
+  },
 );
 
 /**
@@ -106,7 +93,7 @@ equipmentRouter.get("/:id", async (req, res) => {
 equipmentRouter.put(
   "/:id",
   authenticate,
-  upload.single("image"),
+  uploadEquipmentImage.single("image"),
   async (req, res) => {
     const { id } = req.params;
     const { name, details, description } = req.body;
@@ -128,7 +115,7 @@ equipmentRouter.put(
           const oldImagePath = path.join(
             process.cwd(),
             "data/uploads",
-            existing.image
+            existing.image,
           );
           if (fs.existsSync(oldImagePath)) {
             fs.unlinkSync(oldImagePath);
@@ -152,7 +139,7 @@ equipmentRouter.put(
       console.error(error);
       res.status(500).json({ error: "Error updating equipment" });
     }
-  }
+  },
 );
 
 /**
@@ -174,7 +161,7 @@ equipmentRouter.delete("/:id", authenticate, async (req, res) => {
       const imagePath = path.join(
         process.cwd(),
         "data/uploads",
-        equipment.image
+        equipment.image,
       );
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);

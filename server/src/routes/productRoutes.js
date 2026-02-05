@@ -1,33 +1,24 @@
 import express from "express";
 import fs from "fs";
-import multer from "multer";
 import path from "path";
 import { authenticate } from "../middlewares/authenticate.js";
 import prisma from "../helper/pooler.js";
+import { createUploader } from "../middlewares/upload.js";
 
 const productRouter = express.Router();
 
 // Set up multer to store files in the 'uploads' directory
-const uploadDir = path.join(process.cwd(), "data/uploads/products");
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); // Folder where the image will be stored
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = Date.now() + ext; // Unique filename based on timestamp
-    cb(null, filename);
-  },
-});
-
-const upload = multer({ storage });
+const uploadProductImage = createUploader("data/uploads/products", [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
 
 // Create a new product with image upload
 productRouter.post(
   "/",
   authenticate,
-  upload.single("img"),
+  uploadProductImage.single("img"),
   async (req, res) => {
     const { name, description } = req.body;
     const img = req.file ? `products/${req.file.filename}` : null;
@@ -75,7 +66,7 @@ productRouter.get("/:id", async (req, res) => {
 // Update a product by ID
 productRouter.put(
   "/:id",
-  upload.single("img"),
+  uploadProductImage.single("img"),
   async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
