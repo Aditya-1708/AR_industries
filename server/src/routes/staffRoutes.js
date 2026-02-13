@@ -3,7 +3,6 @@ import prisma from "../helper/pooler.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import fs from "fs";
 import path from "path";
-import multer from "multer";
 const staffRouter = Router();
 
 /**
@@ -28,12 +27,13 @@ staffRouter.post(
       if (!name || !role) {
         return res.status(400).json({ message: "Name and role are required" });
       }
+      const img = req.file ? `staff/${req.file.filename}` : null;
 
       const staff = await prisma.staff.create({
         data: {
           name,
           role,
-          image: req.file?.filename,
+          image: img,
         },
       });
 
@@ -49,7 +49,7 @@ staffRouter.post(
  */
 staffRouter.get("/", async (_, res) => {
   const staff = await prisma.staff.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
   res.json(staff);
 });
@@ -93,7 +93,7 @@ staffRouter.put(
         data: {
           name: name ?? existing.name,
           role: role ?? existing.role,
-          image: req.file?.filename ?? existing.image,
+          image: req.file ? `staff/${req.file.filename}` : existing.image,
         },
       });
 

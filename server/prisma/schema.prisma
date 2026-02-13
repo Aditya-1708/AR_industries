@@ -83,6 +83,17 @@ model Staff {
   updatedAt DateTime @updatedAt
 }
 
+model Blog {
+  id        Int      @id @default(autoincrement())
+  title     String
+  thumbnail String // thumbnail image URL
+  cover     String // cover image URL
+  content   String // HTML or JSON from Tiptap
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum ApplicationStatus {
   PENDING
   SHORTLISTED

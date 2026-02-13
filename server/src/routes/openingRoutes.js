@@ -10,7 +10,9 @@ openingRouter.post("/", async (req, res) => {
     const { title, description, requirements, salary, isActive } = req.body;
 
     if (!title || !description) {
-      return res.status(400).json({ error: "Title and description are required" });
+      return res
+        .status(400)
+        .json({ error: "Title and description are required" });
     }
 
     const job = await prisma.jobOpening.create({
@@ -20,8 +22,8 @@ openingRouter.post("/", async (req, res) => {
         requirements: Array.isArray(requirements)
           ? requirements
           : typeof requirements === "string"
-          ? requirements.split(",").map((r) => r.trim())
-          : [],
+            ? requirements.split(",").map((r) => r.trim())
+            : [],
         salary: salary ? parseInt(salary) : null,
         isActive: isActive ?? true,
       },
@@ -53,6 +55,10 @@ openingRouter.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ error: "Invalid job id" });
+    }
+
     const job = await prisma.jobOpening.findUnique({
       where: { id },
     });
@@ -61,7 +67,7 @@ openingRouter.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Job opening not found" });
     }
 
-    res.json(job);
+    res.json({ job });
   } catch (error) {
     console.error("FETCH JOB ERROR:", error);
     res.status(500).json({ error: "Failed to fetch job opening" });
